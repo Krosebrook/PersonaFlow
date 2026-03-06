@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
+import { Mail, Lock, AlertCircle, Sparkles } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 export const AuthPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,9 +12,18 @@ export const AuthPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { setDemoSession } = useAuth();
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!isSupabaseConfigured) {
+      // Fallback to demo mode if Supabase isn't configured
+      setDemoSession();
+      navigate('/dashboard');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -49,6 +59,13 @@ export const AuthPage: React.FC = () => {
             {isLogin ? 'Enter your details to access your account' : 'Sign up to start creating personas'}
           </p>
         </div>
+
+        {!isSupabaseConfigured && (
+          <div className="mb-6 p-4 bg-brand-50 border border-brand-100 rounded-lg flex items-start gap-3 text-brand-700 text-sm">
+            <Sparkles size={18} className="shrink-0 mt-0.5" />
+            <p><strong>Demo Mode:</strong> Supabase is not configured. You can log in with any credentials to explore the app.</p>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-lg flex items-start gap-3 text-red-700 text-sm">
