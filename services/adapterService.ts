@@ -11,98 +11,140 @@ const formatList = (items: string[]) => items.map(i => `- ${i}`).join('\n');
 
 const generateClaudePrompt = (org: Organization, persona: Persona) => {
   return `
-<system_role>
+<system_prompt>
+<role_and_persona>
 You are an AI agent acting as ${persona.name} for ${org.name}.
 Your archetypal role is: ${persona.role_archetype}.
-Your context: ${persona.type} facing, ${persona.mode}.
-</system_role>
+You are operating in a ${persona.type}-facing capacity, in a ${persona.mode} mode.
+</role_and_persona>
 
 <organization_context>
-Name: ${org.name}
+Company Name: ${org.name}
 Industry: ${org.industry}
-Mission: We deliver ${org.services.map(s => s.name).join(', ')}.
-Tone: ${org.voice_profile.tone} (Reading Level: ${org.voice_profile.reading_level})
-Compliance: ${org.compliance.map(c => c.framework).join(', ')} - maintain strict adherence.
+Core Services: ${org.services.map(s => s.name).join(', ')}
 </organization_context>
 
-<constraints>
-${formatList(persona.constraints)}
-NEVER use these phrases: ${org.voice_profile.banned_phrases.join(', ')}
-</constraints>
+<tone_and_style>
+Tone: ${org.voice_profile.tone}
+Reading Level: ${org.voice_profile.reading_level}
+Banned Phrases (NEVER USE): ${org.voice_profile.banned_phrases.join(', ')}
+</tone_and_style>
 
+<rules_and_constraints>
 <capabilities>
+You are authorized to perform the following actions:
 ${formatList(persona.capabilities)}
 </capabilities>
+
+<constraints>
+You must strictly adhere to the following constraints:
+${formatList(persona.constraints)}
+</constraints>
+
+<compliance_frameworks>
+You must operate within the bounds of the following compliance standards:
+${org.compliance.map(c => c.framework).join(', ')}
+</compliance_frameworks>
+</rules_and_constraints>
 
 <examples>
 ${persona.examples.map(ex => `
 <example type="${ex.type}">
-User: ${ex.input}
-Agent: ${ex.output}
+<user_input>${ex.input}</user_input>
+<agent_response>${ex.output}</agent_response>
 </example>`).join('\n')}
 </examples>
 
-<instruction>
-Adopt the persona completely. Do not break character.
-</instruction>
+<instructions>
+Adopt the persona completely. Do not break character. Follow all constraints and tone guidelines strictly. Prioritize compliance above all else.
+</instructions>
+</system_prompt>
 `.trim();
 };
 
 const generateGooglePrompt = (org: Organization, persona: Persona) => {
   return `
-**OBJECTIVE**
-Act as ${persona.name} for ${org.name}, a ${org.industry} company.
-Role: ${persona.role_archetype} (${persona.type} / ${persona.mode})
+# System Instructions
 
-**CONTEXT**
-- Company: ${org.name}
-- Key Services: ${org.services.map(s => s.name).join(', ')}
-- Voice: ${org.voice_profile.tone}
-- Compliance Standards: ${org.compliance.map(c => c.framework).join(', ')}
+## Role and Persona
+You are acting as ${persona.name}, a ${persona.role_archetype} for ${org.name} (a ${org.industry} company).
+You interact with ${persona.type === 'Internal' ? 'internal employees' : 'external customers'} in a ${persona.mode} capacity.
 
-**DIRECTIVES**
-1. Adhere to the following constraints strictly:
-${formatList(persona.constraints)}
-2. You are authorized to:
+## Organization Context
+- **Company:** ${org.name}
+- **Core Services:** ${org.services.map(s => s.name).join(', ')}
+
+## Tone and Voice
+- **Tone:** ${org.voice_profile.tone}
+- **Reading Level:** ${org.voice_profile.reading_level}
+- **Prohibited Phrases (DO NOT USE):** ${org.voice_profile.banned_phrases.join(', ')}
+
+## Capabilities and Constraints
+**You are authorized to:**
 ${formatList(persona.capabilities)}
-3. Avoid prohibited vocabulary: ${org.voice_profile.banned_phrases.join(', ')}
 
-**FEW-SHOT EXAMPLES**
+**Strict Constraints:**
+${formatList(persona.constraints)}
+
+**Compliance Requirements:**
+You must operate within the bounds of: ${org.compliance.map(c => c.framework).join(', ')}.
+
+## Few-Shot Examples
 ${persona.examples.map(ex => `
-Input: "${ex.input}"
-Output: "${ex.output}"
+**User:** ${ex.input}
+**Agent:** ${ex.output}
 `).join('\n')}
+
+## Final Directive
+Maintain this persona consistently. Prioritize constraints and compliance above all else.
 `.trim();
 };
 
 const generateMicrosoftPrompt = (org: Organization, persona: Persona) => {
   return `
-# System Prompt: ${persona.name} for ${org.name}
+# System Message
 
-## Profile
-You are a helpful, intelligent assistant working for ${org.name}.
-Your role is **${persona.role_archetype}**.
-You are interacting with **${persona.type === 'Internal' ? 'internal employees' : 'external customers'}**.
+You are ${persona.name}, an AI assistant for ${org.name}.
 
-## Tone & Style
-- Tone: ${org.voice_profile.tone}
-- Complexity: ${org.voice_profile.reading_level}
-- Do NOT use: ${org.voice_profile.banned_phrases.join(', ')}
+## 1. Persona Definition
+- **Role:** ${persona.role_archetype}
+- **Audience:** ${persona.type === 'Internal' ? 'Internal team members' : 'External customers'}
+- **Mode:** ${persona.mode}
+- **Industry:** ${org.industry}
 
-## Rules of Engagement
-### Allowed Actions
+## 2. Voice & Tone Guidelines
+- **Primary Tone:** ${org.voice_profile.tone}
+- **Complexity:** ${org.voice_profile.reading_level}
+- **Negative Constraints (Banned Phrases):** ${org.voice_profile.banned_phrases.join(', ')}
+
+## 3. Operational Boundaries
+### Allowed Capabilities
 ${formatList(persona.capabilities)}
 
-### Strict Boundaries & Compliance
-- You must comply with: ${org.compliance.map(c => c.framework).join(', ')}.
-- Constraints:
+### Strict Constraints
 ${formatList(persona.constraints)}
 
-## Interaction Examples
-${persona.examples.map((ex, i) => `### Scenario ${i + 1} (${ex.type})\n**User:** ${ex.input}\n**Response:** ${ex.output}`).join('\n\n')}
+### Compliance Standards
+Must adhere to: ${org.compliance.map(c => c.framework).join(', ')}
+
+## 4. Interaction Examples
+${persona.examples.map((ex, i) => `
+### Example ${i + 1} (${ex.type})
+**User:** ${ex.input}
+**Assistant:** ${ex.output}
+`).join('\n')}
 `.trim();
 };
 
 const generateGenericPrompt = (org: Organization, persona: Persona) => {
-  return `Role: ${persona.name} at ${org.name}\nArchetype: ${persona.role_archetype}\n\n${formatList(persona.capabilities)}`;
+  return `
+You are ${persona.name}, an AI assistant for ${org.name}.
+Role: ${persona.role_archetype}
+
+Capabilities:
+${formatList(persona.capabilities)}
+
+Constraints:
+${formatList(persona.constraints)}
+`.trim();
 };

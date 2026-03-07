@@ -60,16 +60,17 @@ export const OrgDetail: React.FC = () => {
     }
   }, [id]);
 
-  if (!org) return <div className="p-8 text-center text-slate-500">Organization not found.</div>;
-
   const selectedPersona = personas.find(p => p.id === selectedPersonaId);
-  const exportContent = selectedPersona ? generatePersonaExport(org, selectedPersona) : '';
 
   useEffect(() => {
     if (selectedPersona) {
       setExportPlatform(selectedPersona.platform);
     }
   }, [selectedPersona]);
+
+  if (!org) return <div className="p-8 text-center text-slate-500">Organization not found.</div>;
+
+  const exportContent = selectedPersona ? generatePersonaExport(org, { ...selectedPersona, platform: exportPlatform }) : '';
 
   const handleCopy = () => {
     navigator.clipboard.writeText(exportContent);
