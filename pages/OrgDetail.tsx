@@ -3,8 +3,8 @@ import { useParams } from 'react-router-dom';
 import { MOCK_ORGS, MOCK_PERSONAS } from '../constants';
 import { generatePersonaExport } from '../services/adapterService';
 import { Button } from '../components/ui/Button';
-import { Copy, Check, Download, AlertTriangle, ShieldCheck, History, RotateCcw, ArrowLeft, GitCompare, ArrowRight, Eye } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { Copy, Check, Download, AlertTriangle, ShieldCheck, History, RotateCcw, ArrowLeft, GitCompare, ArrowRight, Eye, X, FileJson, FileText, DownloadCloud } from 'lucide-react';
+import { cn, downloadFile } from '../lib/utils';
 import { Organization, OrganizationVersion, Persona } from '../types';
 
 export const OrgDetail: React.FC = () => {
@@ -18,6 +18,8 @@ export const OrgDetail: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<OrganizationVersion[]>([]);
   const [viewingVersion, setViewingVersion] = useState<OrganizationVersion | null>(null);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportPlatform, setExportPlatform] = useState<string>('Claude');
 
   // Initialize data
   useEffect(() => {
@@ -63,10 +65,40 @@ export const OrgDetail: React.FC = () => {
   const selectedPersona = personas.find(p => p.id === selectedPersonaId);
   const exportContent = selectedPersona ? generatePersonaExport(org, selectedPersona) : '';
 
+  useEffect(() => {
+    if (selectedPersona) {
+      setExportPlatform(selectedPersona.platform);
+    }
+  }, [selectedPersona]);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(exportContent);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleExportPrompt = (format: 'md' | 'txt') => {
+    if (!selectedPersona || !org) return;
+    const content = generatePersonaExport(org, { ...selectedPersona, platform: exportPlatform });
+    const filename = `${org.name}-${selectedPersona.name}-${exportPlatform}-prompt.${format}`.replace(/\s+/g, '-').toLowerCase();
+    downloadFile(filename, content, format === 'md' ? 'text/markdown' : 'text/plain');
+    setIsExportOpen(false);
+  };
+
+  const handleExportOrg = () => {
+    if (!org) return;
+    const content = JSON.stringify(org, null, 2);
+    const filename = `${org.name}-profile.json`.replace(/\s+/g, '-').toLowerCase();
+    downloadFile(filename, content, 'application/json');
+    setIsExportOpen(false);
+  };
+
+  const handleExportPersonas = () => {
+    if (!personas.length || !org) return;
+    const content = JSON.stringify(personas, null, 2);
+    const filename = `${org.name}-personas.json`.replace(/\s+/g, '-').toLowerCase();
+    downloadFile(filename, content, 'application/json');
+    setIsExportOpen(false);
   };
 
   const handleRestore = (version: OrganizationVersion) => {
@@ -289,7 +321,7 @@ export const OrgDetail: React.FC = () => {
                     {copied ? <Check size={16} className="mr-1 text-green-600"/> : <Copy size={16} className="mr-1"/>}
                     {copied ? 'Copied' : 'Copy'}
                   </Button>
-                  <Button variant="primary" size="sm" className="flex-1 sm:flex-none">
+                  <Button variant="primary" size="sm" className="flex-1 sm:flex-none" onClick={() => setIsExportOpen(true)}>
                     <Download size={16} className="mr-1"/> Export
                   </Button>
                 </div>
@@ -348,6 +380,73 @@ export const OrgDetail: React.FC = () => {
           </div>
         )}
       </div>
+
+      {isExportOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-slate-200">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                <DownloadCloud size={18} className="text-brand-600" />
+                Export Data
+              </h3>
+              <button onClick={() => setIsExportOpen(false)} className="text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-200 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Prompt Export */}
+              {selectedPersona && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <FileText size={16} className="text-slate-500" />
+                    Persona Prompt
+                  </h4>
+                  <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 mb-1.5 block">Target Platform</label>
+                      <select 
+                        className="w-full p-2 text-sm border border-slate-200 rounded-md outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 bg-white"
+                        value={exportPlatform}
+                        onChange={e => setExportPlatform(e.target.value)}
+                      >
+                        <option value="Claude">Claude</option>
+                        <option value="Google">Google (Gemini)</option>
+                        <option value="Microsoft">Microsoft (OpenAI)</option>
+                        <option value="Generic">Generic</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleExportPrompt('md')} className="flex-1 bg-white">
+                        .MD
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleExportPrompt('txt')} className="flex-1 bg-white">
+                        .TXT
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Data Export */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                  <FileJson size={16} className="text-slate-500" />
+                  Raw Data (JSON)
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" size="sm" onClick={handleExportOrg} className="w-full justify-start text-xs">
+                    Organization Profile
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleExportPersonas} className="w-full justify-start text-xs" disabled={personas.length === 0}>
+                    All Personas
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
