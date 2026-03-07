@@ -36,8 +36,7 @@ export const Wizard: React.FC = () => {
       setActiveStep(prev => prev + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
-      // Simulate save
-      console.log('Saving Organization:', formData);
+      // TODO: persist organization to Supabase or local state
       navigate('/dashboard');
     }
   };
