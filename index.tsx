@@ -18,7 +18,10 @@ function mount() {
     );
   } catch (err) {
     console.error("Error during React mounting:", err);
-    document.body.innerHTML += `<div style="color:red; padding:20px">Mount Error: ${err.message}</div>`;
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = 'color:red; padding:20px';
+    errDiv.textContent = `Mount Error: ${err instanceof Error ? err.message : String(err)}`;
+    document.body.appendChild(errDiv);
   }
 }
 

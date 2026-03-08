@@ -3,16 +3,14 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { useAuth } from '../contexts/AuthContext';
 import { 
-  Briefcase, 
-  Users, 
+  FileText,
   LayoutDashboard, 
   Settings, 
   Menu, 
   X,
   PlusCircle,
   LogOut,
-  Bell,
-  FileText
+  Bell
 } from 'lucide-react';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -24,8 +22,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { label: 'My Creations', icon: FileText, path: '/creations' },
     { label: 'Create Profile', icon: PlusCircle, path: '/wizard' },
-    { label: 'Companies', icon: Briefcase, path: '/companies' },
-    { label: 'Personas', icon: Users, path: '/personas' },
     { label: 'Settings', icon: Settings, path: '/settings' },
   ];
 

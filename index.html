@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PersonaFlow - Enterprise AI Profile Generator</title>
+    <meta name="description" content="Create stunning company profiles and generate compliance-aware AI personas for Claude, Google Gemini, and Microsoft Copilot." />
+    <meta property="og:title" content="PersonaFlow - Enterprise AI Profile Generator" />
+    <meta property="og:description" content="The source of truth for enterprise AI agents. Build compliance-aware personas for Claude, Google, and Microsoft." />
+    <meta property="og:type" content="website" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -26,11 +30,22 @@
     </style>
     <script>
       // Robust Error Handling
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
       function showError(title, details) {
         const container = document.getElementById('error-container');
         if (container) {
           container.style.display = 'block';
-          container.innerHTML += `<strong>${title}</strong><br/><pre style="white-space:pre-wrap; font-size: 12px; margin-top: 4px;">${details}</pre><br/>`;
+          const entry = document.createElement('div');
+          entry.innerHTML = '<strong>' + escapeHtml(title) + '</strong><br/><pre style="white-space:pre-wrap; font-size: 12px; margin-top: 4px;">' + escapeHtml(String(details)) + '</pre><br/>';
+          container.appendChild(entry);
         }
         console.error(title, details);
       }
@@ -50,6 +65,7 @@
               brand: {
                 50: '#f0f9ff',
                 100: '#e0f2fe',
+                300: '#7dd3fc',
                 500: '#0ea5e9',
                 600: '#0284c7',
                 700: '#0369a1',
@@ -75,8 +91,7 @@
     "lucide-react": "https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0",
     "tailwind-merge": "https://esm.sh/tailwind-merge@2.2.1",
     "clsx": "https://esm.sh/clsx@2.1.0",
-    "@google/genai": "https://esm.sh/@google/genai@0.2.1",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+    "@google/genai": "https://esm.sh/@google/genai@0.2.1"
   }
 }
 </script>
@@ -86,6 +101,5 @@
     <div id="error-container"></div>
     <div id="root"></div>
     <script type="module" src="./index.tsx"></script>
-  <script type="module" src="/index.tsx"></script>
-</body>
+  </body>
 </html>

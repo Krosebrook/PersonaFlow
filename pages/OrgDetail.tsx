@@ -216,6 +216,7 @@ export const OrgDetail: React.FC = () => {
                showHistory ? "bg-brand-100 text-brand-700" : "hover:bg-slate-200 text-slate-500"
              )}
              title="Version History"
+             aria-label="Version History"
            >
              <History size={18} />
            </button>

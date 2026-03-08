@@ -145,6 +145,7 @@ export const MyCreations: React.FC = () => {
                   onClick={() => handleDelete(comp.id)}
                   className="flex items-center justify-center p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
                   title="Delete"
+                  aria-label="Delete creation"
                 >
                   <Trash2 size={16} />
                 </button>
